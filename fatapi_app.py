@@ -108,15 +108,7 @@ def similarity_score(r1: Record, r2: Record, height_threshold: float = 5.0) -> f
 
 
 def cluster_records(records: List[Record], threshold: float = 0.75) -> List[Dict[str, Any]]:
-    """Group records into potential duplicate clusters.
-
-    Performs pairwise comparisons using the similarity_score function and
-    assigns records to the same cluster if their similarity meets or exceeds
-    the threshold.  Clustering is transitive: if A matches B and B matches C,
-    then all three will be in the same cluster.
-
-    Returns a list of dictionaries with keys `group_id` and `records`.
-    """
+   
     # Disjoint-set (union-find) to manage clusters
     parent: Dict[int, int] = {i: i for i in range(len(records))}
 
@@ -154,32 +146,14 @@ def cluster_records(records: List[Record], threshold: float = 0.75) -> List[Dict
 
 @app.post("/dedup")
 def dedup(request: DedupRequest, threshold: float = 0.75) -> Dict[str, Any]:
-    """Endpoint to detect duplicates.
-
-    Accepts a JSON payload containing an array of records and returns
-    potential duplicate clusters.  The similarity threshold can be
-    overridden using the query parameter `threshold` (default is 0.75).
-    """
+  
     clusters = cluster_records(request.records, threshold=threshold)
     return {"clusters": clusters}
 
 
 @app.post("/search")
 def search_records(query: PhysQuery, threshold: float = 0.75) -> Dict[str, Any]:
-    """Search loaded records based on physical characteristics and cluster matches.
-
-    The application maintains a list of records loaded at startup.  This
-    endpoint filters those records according to the provided physical
-    characteristics:
-
-    * hair_colour, race and eye_colour are matched case-insensitively.
-    * height_cm matches if the absolute difference from the record's height
-      is within `height_tolerance`.
-
-    After filtering, the matching records are clustered using the same
-    similarity heuristic as the `/dedup` endpoint.  The response contains
-    the list of clusters and the matching records.
-    """
+  
     if not any([query.hair_colour, query.race, query.eye_colour, query.height_cm is not None]):
         return {"error": "At least one physical characteristic must be provided"}
     matches: List[Record] = []
@@ -203,5 +177,5 @@ def search_records(query: PhysQuery, threshold: float = 0.75) -> Dict[str, Any]:
 
 @app.get("/")
 def read_root() -> Dict[str, str]:
-    """Root endpoint providing a brief description."""
+  
     return {"message": "Duplicate detection service. Use POST /dedup with your records."}
